@@ -21,7 +21,7 @@ func RandStringRunes(n int) string {
 	return string(b)
 }
 
-func makeNewUser(database *db.DB,c *gin.Context) {
+func makeNewUser(database *db.DB, c *gin.Context) {
 	uid := base64.RawStdEncoding.EncodeToString(uuid.NewV4().Bytes())
 	c.SetCookie(consts.LoginCookieName, uid, consts.CookieLifeTime, "/", consts.CookieDomain, consts.SecureCookie, true)
 	database.AddUser(&db.Gocheck{Cookies: uid, Username: RandStringRunes(64)})
@@ -31,13 +31,17 @@ func InfoHandler(database *db.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 		cookie, err := c.Cookie(consts.LoginCookieName)
 		if err != nil || cookie == "" {
-			makeNewUser(database,c)
+			makeNewUser(database, c)
 			c.JSON(404, gin.H{"error": "User not found"})
 			return
 		}
 		user, err := database.GetUserByCookie(cookie)
-		if err != nil || user.Password == "" {
-			makeNewUser(database,c)
+		if err != nil {
+			makeNewUser(database, c)
+			c.JSON(404, gin.H{"error": "User not found"})
+			return
+		}
+		if user.Password == "" {
 			c.JSON(404, gin.H{"error": "User not found"})
 			return
 		}

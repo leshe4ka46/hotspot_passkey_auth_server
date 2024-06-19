@@ -86,6 +86,7 @@ func AssertionPost(database *db.DB, wba *webauthn.WebAuthn, config *Config) gin.
 			fmt.Println("userHandle:", userHandle)
 			db_user, err = database.GetUserByUsername(string(userHandle))
 			if err != nil {
+				fmt.Println("Failed to get user from db:",string(userHandle))
 				return &store.User{}, errors.New("user not found")
 			}
 			asserting_user := &store.User{
@@ -96,7 +97,7 @@ func AssertionPost(database *db.DB, wba *webauthn.WebAuthn, config *Config) gin.
 			json.Unmarshal([]byte(db_user.Credentials), &asserting_user.Credentials)
 			return asserting_user, nil
 		}, webauthnData, parsedResponse); err != nil {
-			c.JSON(404, gin.H{"error": "User not found"})
+			c.JSON(404, gin.H{"error": "Failed to validate"})
 			return
 		}
 		var macData MacFromAssertion
